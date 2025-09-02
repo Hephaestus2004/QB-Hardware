@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@genkit-ai/googleai": "^1.18.0",
+    "axios": "^1.11.0",
+    "dotenv": "^17.2.1",
+    "genkit": "^1.18.0"
+  }
+}

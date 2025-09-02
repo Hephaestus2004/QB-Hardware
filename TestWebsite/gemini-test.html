@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gemini API Test</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container py-4">
+  <h1 class="mb-4">Gemini API Test</h1>
+  <button id="testBtn" class="btn btn-primary mb-3">Get Gemini Message</button>
+  <div id="result" class="card p-3"></div>
+  <script>
+    document.getElementById('testBtn').onclick = async function() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.textContent = 'Loading...';
+      try {
+        const response = await fetch('/gemini-test');
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          resultDiv.textContent = data.message || 'No message received.';
+        } else {
+          const text = await response.text();
+          resultDiv.textContent = 'Error: Server did not return JSON.\n' + text;
+        }
+      } catch (err) {
+        resultDiv.textContent = 'Error: ' + err;
+      }
+    };
+  </script>
+</body>
+</html>
