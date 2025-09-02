@@ -37,25 +37,22 @@
       let chartMQ7 = new Chart(ctxMQ7, { type: 'line', data: { labels: [], datasets: [{ label: 'MQ7 Voltage (V)', data: [], borderColor: '#3e2723', backgroundColor: '#ffd9b3', tension: 0.3 }] }, options: { responsive: true }});
       let chartMQ135 = new Chart(ctxMQ135, { type: 'line', data: { labels: [], datasets: [{ label: 'MQ135 Voltage (V)', data: [], borderColor: '#5d4037', backgroundColor: '#ffe0b2', tension: 0.3 }] }, options: { responsive: true }});
 
-      const maxPoints = 50; // show last 50 readings
+      const maxPoints = 50; // last 50 readings
 
-      // Reference to modules
       const modulesRef = ref(db, "sensor_modules");
 
       onValue(modulesRef, (snapshot) => {
         const modulesData = snapshot.val();
         if (!modulesData) return;
 
-        // Update module liveness indicator
+        // Module liveness badges
         modulesStatusDiv.innerHTML = "";
         Object.entries(modulesData).forEach(([moduleName, moduleData]) => {
           const statusColor = moduleData.status === "online" ? "bg-success" : "bg-danger";
-          modulesStatusDiv.innerHTML += `
-            <span class="badge ${statusColor} me-2 p-2">${moduleName}: ${moduleData.status}</span>
-          `;
+          modulesStatusDiv.innerHTML += `<span class="badge ${statusColor} me-2 p-2">${moduleName}: ${moduleData.status}</span>`;
         });
 
-        // Update table and charts for Module 1 only (example)
+        // Module 1 readings
         const module1 = modulesData["module_1"];
         if (!module1 || !module1.readings) return;
 
@@ -79,9 +76,8 @@
           mq135Data.push(reading.MQ135.voltage);
         });
 
-        // Update live indicator with last reading timestamp
-        const lastTimestamp = readings.length ? readings[readings.length-1].timestamp : "N/A";
-        liveIndicator.textContent = `Last update: ${lastTimestamp}`;
+        // Live update
+        liveIndicator.textContent = `Last update: ${readings.length ? readings[readings.length-1].timestamp : "N/A"}`;
 
         // Update charts
         chartMQ3.data.labels = labels;
@@ -106,6 +102,15 @@
     .table-wrapper { max-height: 300px; overflow-y: auto; }
     table { background-color: #fff8f0; }
     #modules-status span { font-size: 1rem; }
+    
+    /* Scrollable charts */
+    .chart-wrapper {
+      overflow-x: auto;
+      padding-bottom: 1rem;
+    }
+    .chart-wrapper canvas {
+      min-width: 600px; /* adjusts chart width for scrolling on small screens */
+    }
   </style>
 </head>
 
@@ -142,18 +147,18 @@
     </div>
   </div>
 
-  <!-- Charts -->
-  <div class="card p-3 mb-4">
+  <!-- Scrollable Charts -->
+  <div class="card p-3 mb-4 chart-wrapper">
     <h2>MQ3 Sensor Graph</h2>
     <canvas id="chartMQ3" height="100"></canvas>
   </div>
 
-  <div class="card p-3 mb-4">
+  <div class="card p-3 mb-4 chart-wrapper">
     <h2>MQ7 Sensor Graph</h2>
     <canvas id="chartMQ7" height="100"></canvas>
   </div>
 
-  <div class="card p-3 mb-4">
+  <div class="card p-3 mb-4 chart-wrapper">
     <h2>MQ135 Sensor Graph</h2>
     <canvas id="chartMQ135" height="100"></canvas>
   </div>
