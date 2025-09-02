@@ -1,0 +1,22 @@
+{
+  "sensor_modules": {
+    "module_1": {
+      "status": "online",
+      "last_update": "2025-09-02T05:00:00+08:00",
+      "readings": [
+        {
+          "timestamp": "2025-09-02T05:00:00+08:00",
+          "MQ3": { "raw": 3, "voltage": 0.002 },
+          "MQ7": { "raw": 58, "voltage": 0.047 },
+          "MQ135": { "raw": 120, "voltage": 0.097 }
+        },
+        {
+          "timestamp": "2025-09-02T05:05:00+08:00",
+          "MQ3": { "raw": 4, "voltage": 0.003 },
+          "MQ7": { "raw": 60, "voltage": 0.049 },
+          "MQ135": { "raw": 118, "voltage": 0.095 }
+        }
+      ]
+    }
+  }
+}

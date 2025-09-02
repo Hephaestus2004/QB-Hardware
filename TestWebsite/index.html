@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Qualibean Sensor Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBKnmxRyJCN9oeTqs_aZTfaZ1ZRQl64m3Q",
+      authDomain: "qb-sensors-analytics.firebaseapp.com",
+      databaseURL: "https://qb-sensors-analytics-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "qb-sensors-analytics",
+      storageBucket: "qb-sensors-analytics.appspot.com",
+      messagingSenderId: "948913937137",
+      appId: "1:948913937137:web:e3d6de09acea27eb21e750",
+      measurementId: "G-FXC4K2M95F"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const tableBody = document.getElementById("sensor-table-body");
+      const liveIndicator = document.getElementById("live-indicator");
+      const modulesStatusDiv = document.getElementById("modules-status");
+
+      const ctxMQ3 = document.getElementById("chartMQ3").getContext("2d");
+      const ctxMQ7 = document.getElementById("chartMQ7").getContext("2d");
+      const ctxMQ135 = document.getElementById("chartMQ135").getContext("2d");
+
+      let chartMQ3 = new Chart(ctxMQ3, { type: 'line', data: { labels: [], datasets: [{ label: 'MQ3 Voltage (V)', data: [], borderColor: '#6f4e37', backgroundColor: '#ffe6cc', tension: 0.3 }] }, options: { responsive: true }});
+      let chartMQ7 = new Chart(ctxMQ7, { type: 'line', data: { labels: [], datasets: [{ label: 'MQ7 Voltage (V)', data: [], borderColor: '#3e2723', backgroundColor: '#ffd9b3', tension: 0.3 }] }, options: { responsive: true }});
+      let chartMQ135 = new Chart(ctxMQ135, { type: 'line', data: { labels: [], datasets: [{ label: 'MQ135 Voltage (V)', data: [], borderColor: '#5d4037', backgroundColor: '#ffe0b2', tension: 0.3 }] }, options: { responsive: true }});
+
+      const maxPoints = 50; // show last 50 readings
+
+      // Reference to modules
+      const modulesRef = ref(db, "sensor_modules");
+
+      onValue(modulesRef, (snapshot) => {
+        const modulesData = snapshot.val();
+        if (!modulesData) return;
+
+        // Update module liveness indicator
+        modulesStatusDiv.innerHTML = "";
+        Object.entries(modulesData).forEach(([moduleName, moduleData]) => {
+          const statusColor = moduleData.status === "online" ? "bg-success" : "bg-danger";
+          modulesStatusDiv.innerHTML += `
+            <span class="badge ${statusColor} me-2 p-2">${moduleName}: ${moduleData.status}</span>
+          `;
+        });
+
+        // Update table and charts for Module 1 only (example)
+        const module1 = modulesData["module_1"];
+        if (!module1 || !module1.readings) return;
+
+        const readings = Object.values(module1.readings).slice(-maxPoints);
+        tableBody.innerHTML = "";
+
+        const labels = [], mq3Data = [], mq7Data = [], mq135Data = [];
+
+        readings.forEach((reading) => {
+          tableBody.innerHTML += `
+            <tr>
+              <td>${reading.timestamp}</td>
+              <td>${reading.MQ3.voltage.toFixed(3)}</td>
+              <td>${reading.MQ7.voltage.toFixed(3)}</td>
+              <td>${reading.MQ135.voltage.toFixed(3)}</td>
+            </tr>
+          `;
+          labels.push(reading.timestamp);
+          mq3Data.push(reading.MQ3.voltage);
+          mq7Data.push(reading.MQ7.voltage);
+          mq135Data.push(reading.MQ135.voltage);
+        });
+
+        // Update live indicator with last reading timestamp
+        const lastTimestamp = readings.length ? readings[readings.length-1].timestamp : "N/A";
+        liveIndicator.textContent = `Last update: ${lastTimestamp}`;
+
+        // Update charts
+        chartMQ3.data.labels = labels;
+        chartMQ3.data.datasets[0].data = mq3Data;
+        chartMQ3.update();
+
+        chartMQ7.data.labels = labels;
+        chartMQ7.data.datasets[0].data = mq7Data;
+        chartMQ7.update();
+
+        chartMQ135.data.labels = labels;
+        chartMQ135.data.datasets[0].data = mq135Data;
+        chartMQ135.update();
+      });
+    });
+  </script>
+
+  <style>
+    body { font-family: 'Arial', sans-serif; background-color: #fdf6f0; color: #3e2723; }
+    .card { background-color: #fff8f0; border-radius: 1rem; margin-bottom: 1.5rem; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    h1, h2 { color: #6f4e37; }
+    .table-wrapper { max-height: 300px; overflow-y: auto; }
+    table { background-color: #fff8f0; }
+    #modules-status span { font-size: 1rem; }
+  </style>
+</head>
+
+<body class="container py-4">
+  <h1 class="mb-4">Qualibean Sensor Dashboard</h1>
+
+  <!-- Module liveness -->
+  <div class="card p-3 mb-4">
+    <h2>Modules Status</h2>
+    <div id="modules-status"></div>
+  </div>
+
+  <!-- Live update indicator -->
+  <div class="card p-3 mb-4">
+    <h2>Live Update</h2>
+    <div id="live-indicator">Waiting for data...</div>
+  </div>
+
+  <!-- Sensor Table -->
+  <div class="card p-3 mb-4">
+    <h2>Sensor Readings Table</h2>
+    <div class="table-wrapper">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>MQ3 (V)</th>
+            <th>MQ7 (V)</th>
+            <th>MQ135 (V)</th>
+          </tr>
+        </thead>
+        <tbody id="sensor-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="card p-3 mb-4">
+    <h2>MQ3 Sensor Graph</h2>
+    <canvas id="chartMQ3" height="100"></canvas>
+  </div>
+
+  <div class="card p-3 mb-4">
+    <h2>MQ7 Sensor Graph</h2>
+    <canvas id="chartMQ7" height="100"></canvas>
+  </div>
+
+  <div class="card p-3 mb-4">
+    <h2>MQ135 Sensor Graph</h2>
+    <canvas id="chartMQ135" height="100"></canvas>
+  </div>
+</body>
+</html>
